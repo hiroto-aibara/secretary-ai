@@ -1,0 +1,22 @@
+[tools]
+go = "latest"
+node = "22"
+
+[tasks.build]
+description = "Build frontend and Go binary"
+run = """
+cd web && npm run build
+cd .. && go build -o bin/taskmgr ./cmd/taskmgr
+"""
+
+[tasks.dev]
+description = "Run Go dev server"
+run = "go run ./cmd/taskmgr"
+
+[tasks."dev:front"]
+description = "Run frontend dev server"
+run = "cd web && npm run dev"
+
+[tasks.clean]
+description = "Clean build artifacts"
+run = "rm -rf bin/ web/dist/"
