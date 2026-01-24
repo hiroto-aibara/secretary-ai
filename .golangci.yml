@@ -1,0 +1,56 @@
+run:
+  timeout: 3m
+
+linters:
+  enable:
+    - errcheck
+    - errorlint
+    - gocritic
+    - goimports
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - depguard
+
+linters-settings:
+  depguard:
+    rules:
+      domain:
+        files:
+          - "**/internal/domain/**"
+        deny:
+          - pkg: "github.com/hiroto-aibara/secretary-ai/internal/usecase"
+            desc: "domain must not import usecase"
+          - pkg: "github.com/hiroto-aibara/secretary-ai/internal/handler"
+            desc: "domain must not import handler"
+          - pkg: "github.com/hiroto-aibara/secretary-ai/internal/infra"
+            desc: "domain must not import infra"
+      usecase:
+        files:
+          - "**/internal/usecase/**"
+        deny:
+          - pkg: "github.com/hiroto-aibara/secretary-ai/internal/handler"
+            desc: "usecase must not import handler"
+          - pkg: "github.com/hiroto-aibara/secretary-ai/internal/infra"
+            desc: "usecase must not import infra"
+      handler:
+        files:
+          - "**/internal/handler/**"
+        deny:
+          - pkg: "github.com/hiroto-aibara/secretary-ai/internal/infra"
+            desc: "handler must not import infra"
+
+  errorlint:
+    errorf: true
+    asserts: true
+    comparison: true
+
+  goimports:
+    local-prefixes: github.com/hiroto-aibara/secretary-ai
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style

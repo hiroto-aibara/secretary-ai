@@ -1,6 +1,8 @@
 [tools]
 go = "latest"
 node = "22"
+"go:github.com/golangci/golangci-lint/cmd/golangci-lint" = "latest"
+"go:golang.org/x/tools/cmd/goimports" = "latest"
 
 [tasks.build]
 description = "Build frontend and Go binary"
@@ -16,6 +18,24 @@ run = "go run ./cmd/taskmgr"
 [tasks."dev:front"]
 description = "Run frontend dev server"
 run = "cd web && npm run dev"
+
+[tasks.fmt]
+description = "Format all code"
+run = """
+goimports -w ./internal/ ./cmd/
+cd web && npx prettier --write 'src/**/*.{ts,tsx}'
+"""
+
+[tasks.lint]
+description = "Run all linters"
+run = """
+golangci-lint run ./...
+cd web && npx tsc --noEmit && npx eslint src/
+"""
+
+[tasks.test]
+description = "Run all tests"
+run = "go test ./internal/..."
 
 [tasks.clean]
 description = "Clean build artifacts"
