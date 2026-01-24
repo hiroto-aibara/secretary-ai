@@ -10,7 +10,13 @@ interface Props {
   onDelete: () => void
 }
 
-export function CardModal({ card, onClose, onSave, onArchive, onDelete }: Props) {
+export function CardModal({
+  card,
+  onClose,
+  onSave,
+  onArchive,
+  onDelete,
+}: Props) {
   const [title, setTitle] = useState(card.title)
   const [description, setDescription] = useState(card.description)
   const [labelsText, setLabelsText] = useState((card.labels ?? []).join(', '))
@@ -55,7 +61,9 @@ export function CardModal({ card, onClose, onSave, onArchive, onDelete }: Props)
 
           <div className={styles.meta}>
             <span>List: {card.list}</span>
-            <span>Created: {new Date(card.created_at).toLocaleDateString()}</span>
+            <span>
+              Created: {new Date(card.created_at).toLocaleDateString()}
+            </span>
           </div>
         </div>
 

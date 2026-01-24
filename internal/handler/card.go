@@ -140,7 +140,7 @@ func (h *CardHandler) archive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	card, err := h.uc.Archive(r.Context(), boardID, cardID)
+	card, err := h.uc.Archive(r.Context(), boardID, cardID, req.Archived)
 	if err != nil {
 		writeError(w, err)
 		return

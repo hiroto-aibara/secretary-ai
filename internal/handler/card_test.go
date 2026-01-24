@@ -23,6 +23,7 @@ type mockCardRepo struct {
 	delErr    error
 	nextID    string
 	nextIDErr error
+	createErr error
 }
 
 func (m *mockCardRepo) ListByBoard(_ context.Context, _ string, _ bool) ([]domain.Card, error) {
@@ -52,6 +53,15 @@ func (m *mockCardRepo) NextID(_ context.Context, _ string) (string, error) {
 	if m.nextIDErr != nil {
 		return "", m.nextIDErr
 	}
+	return m.nextID, nil
+}
+
+func (m *mockCardRepo) Create(_ context.Context, _ string, card *domain.Card) (string, error) {
+	if m.createErr != nil {
+		return "", m.createErr
+	}
+	card.ID = m.nextID
+	m.card = card
 	return m.nextID, nil
 }
 

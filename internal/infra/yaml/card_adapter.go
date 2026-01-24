@@ -34,3 +34,7 @@ func (a *CardRepositoryAdapter) Delete(ctx context.Context, boardID, cardID stri
 func (a *CardRepositoryAdapter) NextID(ctx context.Context, boardID string) (string, error) {
 	return a.store.NextID(ctx, boardID)
 }
+
+func (a *CardRepositoryAdapter) Create(ctx context.Context, boardID string, card *domain.Card) (string, error) {
+	return a.store.CreateCard(ctx, boardID, card)
+}

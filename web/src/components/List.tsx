@@ -1,7 +1,4 @@
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import type { Card as CardType, List as ListType } from '../types'
 import { Card } from './Card'

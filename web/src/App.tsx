@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Board as BoardType, Card as CardType } from './types'
-import { useApi } from './hooks/useApi'
+import { api } from './hooks/useApi'
 import { useWebSocket } from './hooks/useWebSocket'
 import { Board } from './components/Board'
 import { ArchiveView } from './components/ArchiveView'
 import styles from './App.module.css'
 
 function App() {
-  const api = useApi()
   const [boards, setBoards] = useState<BoardType[]>([])
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null)
   const [cards, setCards] = useState<CardType[]>([])
@@ -15,43 +14,62 @@ function App() {
   const [allCards, setAllCards] = useState<CardType[]>([])
 
   const selectedBoard = boards.find((b) => b.id === selectedBoardId) || null
+  const selectedBoardIdRef = useRef(selectedBoardId)
+
+  useEffect(() => {
+    selectedBoardIdRef.current = selectedBoardId
+  }, [selectedBoardId])
 
   const loadBoards = useCallback(async () => {
     const data = await api.boards.list()
     setBoards(data)
-    if (data.length > 0 && !selectedBoardId) {
+    if (data.length > 0 && !selectedBoardIdRef.current) {
       setSelectedBoardId(data[0].id)
     }
-  }, [api.boards, selectedBoardId])
+  }, [])
 
   const loadCards = useCallback(async () => {
-    if (!selectedBoardId) return
-    const data = await api.cards.list(selectedBoardId)
+    const boardId = selectedBoardIdRef.current
+    if (!boardId) return
+    const data = await api.cards.list(boardId)
     setCards(data)
-  }, [api.cards, selectedBoardId])
+  }, [])
 
   const loadAllCards = useCallback(async () => {
-    if (!selectedBoardId) return
-    const data = await api.cards.list(selectedBoardId, true)
+    const boardId = selectedBoardIdRef.current
+    if (!boardId) return
+    const data = await api.cards.list(boardId, true)
     setAllCards(data)
-  }, [api.cards, selectedBoardId])
+  }, [])
 
   useEffect(() => {
-    loadBoards()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (selectedBoardId) {
-      loadCards()
+    let active = true
+    api.boards.list().then((data) => {
+      if (!active) return
+      setBoards(data)
+      if (data.length > 0 && !selectedBoardIdRef.current) {
+        setSelectedBoardId(data[0].id)
+      }
+    })
+    return () => {
+      active = false
     }
-  }, [selectedBoardId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
-  const handleRefresh = useCallback(() => {
-    loadCards()
-  }, [loadCards])
+  useEffect(() => {
+    if (!selectedBoardId) return
+    let active = true
+    api.cards.list(selectedBoardId).then((data) => {
+      if (!active) return
+      setCards(data)
+    })
+    return () => {
+      active = false
+    }
+  }, [selectedBoardId])
 
   useWebSocket((event) => {
-    if (event.board_id === selectedBoardId) {
+    if (event.board_id === selectedBoardIdRef.current) {
       if (event.type === 'board_updated') {
         loadBoards()
       }
@@ -65,8 +83,9 @@ function App() {
   }
 
   const handleRestore = async (cardId: string) => {
-    if (!selectedBoardId) return
-    await api.cards.archive(selectedBoardId, cardId, false)
+    const boardId = selectedBoardIdRef.current
+    if (!boardId) return
+    await api.cards.archive(boardId, cardId, false)
     await loadAllCards()
     loadCards()
   }
@@ -96,7 +115,7 @@ function App() {
       </header>
 
       {selectedBoard ? (
-        <Board board={selectedBoard} cards={cards} onRefresh={handleRefresh} />
+        <Board board={selectedBoard} cards={cards} onRefresh={loadCards} />
       ) : (
         <div className={styles.empty}>
           <p>No boards found. Create one via API.</p>

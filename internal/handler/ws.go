@@ -11,7 +11,12 @@ import (
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true // non-browser clients
+		}
+		host := r.Host
+		return origin == "http://"+host || origin == "https://"+host
 	},
 }
 

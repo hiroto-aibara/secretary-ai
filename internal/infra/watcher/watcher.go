@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	"context"
 	"encoding/json"
 	"io/fs"
 	"log/slog"
@@ -35,7 +36,7 @@ func New(broadcaster Broadcaster, basePath string) *Watcher {
 	}
 }
 
-func (w *Watcher) Start() error {
+func (w *Watcher) Start(ctx context.Context) error {
 	fsw, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
@@ -56,6 +57,8 @@ func (w *Watcher) Start() error {
 
 	for {
 		select {
+		case <-ctx.Done():
+			return ctx.Err()
 		case fsEvent, ok := <-fsw.Events:
 			if !ok {
 				return nil

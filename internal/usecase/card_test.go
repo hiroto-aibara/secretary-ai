@@ -10,14 +10,16 @@ import (
 )
 
 type mockCardRepo struct {
-	cards     []domain.Card
-	card      *domain.Card
-	getErr    error
-	saveErr   error
-	delErr    error
-	nextID    string
-	nextIDErr error
-	savedCard *domain.Card
+	cards       []domain.Card
+	card        *domain.Card
+	getErr      error
+	saveErr     error
+	delErr      error
+	nextID      string
+	nextIDErr   error
+	createErr   error
+	savedCard   *domain.Card
+	createdCard *domain.Card
 }
 
 func (m *mockCardRepo) ListByBoard(_ context.Context, _ string, _ bool) ([]domain.Card, error) {
@@ -47,6 +49,15 @@ func (m *mockCardRepo) NextID(_ context.Context, _ string) (string, error) {
 	if m.nextIDErr != nil {
 		return "", m.nextIDErr
 	}
+	return m.nextID, nil
+}
+
+func (m *mockCardRepo) Create(_ context.Context, _ string, card *domain.Card) (string, error) {
+	if m.createErr != nil {
+		return "", m.createErr
+	}
+	card.ID = m.nextID
+	m.createdCard = card
 	return m.nextID, nil
 }
 
@@ -290,31 +301,35 @@ func TestCardUseCase_Archive(t *testing.T) {
 	tests := []struct {
 		name         string
 		cardID       string
+		archived     bool
 		setup        func(*mockCardRepo)
 		wantArchived bool
 		wantErr      bool
 	}{
 		{
-			name:   "archive active card",
-			cardID: "card-1",
+			name:     "archive active card",
+			cardID:   "card-1",
+			archived: true,
 			setup: func(m *mockCardRepo) {
 				m.card = &domain.Card{ID: "card-1", Archived: false, Title: "Test", List: "todo"}
 			},
 			wantArchived: true,
 		},
 		{
-			name:   "restore archived card",
-			cardID: "card-1",
+			name:     "restore archived card",
+			cardID:   "card-1",
+			archived: false,
 			setup: func(m *mockCardRepo) {
 				m.card = &domain.Card{ID: "card-1", Archived: true, Title: "Test", List: "todo"}
 			},
 			wantArchived: false,
 		},
 		{
-			name:    "not found",
-			cardID:  "missing",
-			setup:   func(_ *mockCardRepo) {},
-			wantErr: true,
+			name:     "not found",
+			cardID:   "missing",
+			archived: true,
+			setup:    func(_ *mockCardRepo) {},
+			wantErr:  true,
 		},
 	}
 
@@ -325,7 +340,7 @@ func TestCardUseCase_Archive(t *testing.T) {
 			boardRepo := &mockBoardRepo{}
 			uc := usecase.NewCardUseCase(cardRepo, boardRepo)
 
-			got, err := uc.Archive(context.Background(), "board-1", tt.cardID)
+			got, err := uc.Archive(context.Background(), "board-1", tt.cardID, tt.archived)
 			if tt.wantErr {
 				if err == nil {
 					t.Error("expected error, got nil")
@@ -388,25 +403,9 @@ func TestCardUseCase_Get(t *testing.T) {
 	}
 }
 
-func TestCardUseCase_Create_NextIDError(t *testing.T) {
+func TestCardUseCase_Create_Error(t *testing.T) {
 	cardRepo := &mockCardRepo{
-		nextIDErr: errors.New("id generation failed"),
-	}
-	boardRepo := &mockBoardRepo{
-		board: &domain.Board{ID: "board-1", Lists: []domain.List{{ID: "todo", Name: "Todo"}}},
-	}
-	uc := usecase.NewCardUseCase(cardRepo, boardRepo)
-
-	_, err := uc.Create(context.Background(), "board-1", &domain.Card{Title: "New", List: "todo"})
-	if err == nil {
-		t.Error("expected error, got nil")
-	}
-}
-
-func TestCardUseCase_Create_SaveError(t *testing.T) {
-	cardRepo := &mockCardRepo{
-		nextID:  "20260124-001",
-		saveErr: errors.New("save failed"),
+		createErr: errors.New("create failed"),
 	}
 	boardRepo := &mockBoardRepo{
 		board: &domain.Board{ID: "board-1", Lists: []domain.List{{ID: "todo", Name: "Todo"}}},
@@ -468,7 +467,7 @@ func TestCardUseCase_Archive_SaveError(t *testing.T) {
 	boardRepo := &mockBoardRepo{}
 	uc := usecase.NewCardUseCase(cardRepo, boardRepo)
 
-	_, err := uc.Archive(context.Background(), "board-1", "card-1")
+	_, err := uc.Archive(context.Background(), "board-1", "card-1", true)
 	if err == nil {
 		t.Error("expected error, got nil")
 	}

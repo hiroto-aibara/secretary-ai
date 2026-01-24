@@ -47,7 +47,7 @@ func (uc *BoardUseCase) Update(ctx context.Context, id string, board *domain.Boa
 	if board.Name != "" {
 		existing.Name = board.Name
 	}
-	if board.Lists != nil {
+	if len(board.Lists) > 0 {
 		existing.Lists = board.Lists
 	}
 

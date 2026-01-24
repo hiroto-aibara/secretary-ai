@@ -208,6 +208,10 @@ func (s *Store) NextID(_ context.Context, boardID string) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	return s.nextIDLocked(boardID)
+}
+
+func (s *Store) nextIDLocked(boardID string) (string, error) {
 	today := time.Now().Format("20060102")
 	dir := s.cardsDir(boardID)
 
@@ -237,6 +241,32 @@ func (s *Store) NextID(_ context.Context, boardID string) (string, error) {
 	}
 
 	return fmt.Sprintf("%s-%03d", today, maxSeq+1), nil
+}
+
+func (s *Store) CreateCard(_ context.Context, boardID string, card *domain.Card) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	id, err := s.nextIDLocked(boardID)
+	if err != nil {
+		return "", err
+	}
+	card.ID = id
+
+	dir := s.cardsDir(boardID)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", fmt.Errorf("create cards dir: %w", err)
+	}
+
+	data, err := yamlv3.Marshal(card)
+	if err != nil {
+		return "", fmt.Errorf("marshal card: %w", err)
+	}
+
+	if err := os.WriteFile(s.cardFile(boardID, card.ID), data, 0o644); err != nil {
+		return "", fmt.Errorf("write card file: %w", err)
+	}
+	return id, nil
 }
 
 func (s *Store) readCard(boardID, cardID string) (*domain.Card, error) {

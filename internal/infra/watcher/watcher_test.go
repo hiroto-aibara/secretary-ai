@@ -1,6 +1,7 @@
 package watcher_test
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -45,10 +46,13 @@ func TestWatcher_Start_BoardUpdated(t *testing.T) {
 	bc := &mockBroadcaster{}
 	w := watcher.New(bc, tmpDir)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Start watcher in background
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- w.Start()
+		errCh <- w.Start(ctx)
 	}()
 
 	// Wait for watcher to be ready
@@ -92,9 +96,12 @@ func TestWatcher_Start_CardUpdated(t *testing.T) {
 	bc := &mockBroadcaster{}
 	w := watcher.New(bc, tmpDir)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- w.Start()
+		errCh <- w.Start(ctx)
 	}()
 
 	time.Sleep(200 * time.Millisecond)
@@ -136,9 +143,12 @@ func TestWatcher_Start_NonYamlIgnored(t *testing.T) {
 	bc := &mockBroadcaster{}
 	w := watcher.New(bc, tmpDir)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- w.Start()
+		errCh <- w.Start(ctx)
 	}()
 
 	time.Sleep(200 * time.Millisecond)

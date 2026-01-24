@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -50,8 +51,10 @@ func main() {
 	r.Get("/*", web.SPAHandler())
 
 	// start watcher
+	watchCtx, watchCancel := context.WithCancel(context.Background())
+	defer watchCancel()
 	go func() {
-		if err := w.Start(); err != nil {
+		if err := w.Start(watchCtx); err != nil && !errors.Is(err, context.Canceled) {
 			slog.Error("watcher failed", "error", err)
 		}
 	}()
@@ -76,6 +79,7 @@ func main() {
 	<-quit
 
 	slog.Info("shutting down server")
+	watchCancel()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {

@@ -44,20 +44,16 @@ func (uc *CardUseCase) Create(ctx context.Context, boardID string, card *domain.
 		}
 	}
 
-	id, err := uc.cardRepo.NextID(ctx, boardID)
-	if err != nil {
-		return nil, err
-	}
-	card.ID = id
-
 	now := time.Now()
 	card.CreatedAt = now
 	card.UpdatedAt = now
 	card.Archived = false
 
-	if err := uc.cardRepo.Save(ctx, boardID, card); err != nil {
+	id, err := uc.cardRepo.Create(ctx, boardID, card)
+	if err != nil {
 		return nil, err
 	}
+	card.ID = id
 	return card, nil
 }
 
@@ -120,13 +116,13 @@ func (uc *CardUseCase) Move(ctx context.Context, boardID, cardID, toList string,
 	return card, nil
 }
 
-func (uc *CardUseCase) Archive(ctx context.Context, boardID, cardID string) (*domain.Card, error) {
+func (uc *CardUseCase) Archive(ctx context.Context, boardID, cardID string, archived bool) (*domain.Card, error) {
 	card, err := uc.cardRepo.Get(ctx, boardID, cardID)
 	if err != nil {
 		return nil, err
 	}
 
-	card.Archived = !card.Archived
+	card.Archived = archived
 	card.UpdatedAt = time.Now()
 
 	if err := uc.cardRepo.Save(ctx, boardID, card); err != nil {

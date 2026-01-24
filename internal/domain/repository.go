@@ -15,4 +15,5 @@ type CardRepository interface {
 	Save(ctx context.Context, boardID string, card *Card) error
 	Delete(ctx context.Context, boardID, cardID string) error
 	NextID(ctx context.Context, boardID string) (string, error)
+	Create(ctx context.Context, boardID string, card *Card) (string, error)
 }

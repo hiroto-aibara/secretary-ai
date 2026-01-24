@@ -10,7 +10,7 @@ import {
 import type { Board as BoardType, Card as CardType } from '../types'
 import { List } from './List'
 import { CardModal } from './CardModal'
-import { useApi } from '../hooks/useApi'
+import { api } from '../hooks/useApi'
 import styles from './Board.module.css'
 
 interface Props {
@@ -20,7 +20,6 @@ interface Props {
 }
 
 export function Board({ board, cards, onRefresh }: Props) {
-  const api = useApi()
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null)
   const [dragOverList, setDragOverList] = useState<string | null>(null)
 
@@ -69,34 +68,54 @@ export function Board({ board, cards, onRefresh }: Props) {
       order = targetCards.length
     }
 
-    await api.cards.move(board.id, activeCard.id, targetList, order)
-    onRefresh()
+    try {
+      await api.cards.move(board.id, activeCard.id, targetList, order)
+      onRefresh()
+    } catch (err) {
+      console.error('Failed to move card:', err)
+    }
   }
 
   const handleAddCard = async (listId: string, title: string) => {
-    await api.cards.create(board.id, { title, list: listId })
-    onRefresh()
+    try {
+      await api.cards.create(board.id, { title, list: listId })
+      onRefresh()
+    } catch (err) {
+      console.error('Failed to create card:', err)
+    }
   }
 
   const handleSaveCard = async (updates: Partial<CardType>) => {
     if (!selectedCard) return
-    await api.cards.update(board.id, selectedCard.id, updates)
-    setSelectedCard(null)
-    onRefresh()
+    try {
+      await api.cards.update(board.id, selectedCard.id, updates)
+      setSelectedCard(null)
+      onRefresh()
+    } catch (err) {
+      console.error('Failed to update card:', err)
+    }
   }
 
   const handleArchiveCard = async () => {
     if (!selectedCard) return
-    await api.cards.archive(board.id, selectedCard.id, !selectedCard.archived)
-    setSelectedCard(null)
-    onRefresh()
+    try {
+      await api.cards.archive(board.id, selectedCard.id, !selectedCard.archived)
+      setSelectedCard(null)
+      onRefresh()
+    } catch (err) {
+      console.error('Failed to archive card:', err)
+    }
   }
 
   const handleDeleteCard = async () => {
     if (!selectedCard) return
-    await api.cards.delete(board.id, selectedCard.id)
-    setSelectedCard(null)
-    onRefresh()
+    try {
+      await api.cards.delete(board.id, selectedCard.id)
+      setSelectedCard(null)
+      onRefresh()
+    } catch (err) {
+      console.error('Failed to delete card:', err)
+    }
   }
 
   return (
