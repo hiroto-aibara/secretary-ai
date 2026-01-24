@@ -1,0 +1,80 @@
+.list {
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 280px;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 120px);
+}
+
+.header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.cards {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 40px;
+}
+
+.addForm {
+  margin-top: 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.addActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.addBtn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  background: #2563eb;
+}
+
+.cancelBtn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.addCardTrigger {
+  background: none;
+  border: none;
+  color: #64748b;
+  text-align: left;
+  padding: 6px 4px;
+  cursor: pointer;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.addCardTrigger:hover {
+  color: #334155;
+}
