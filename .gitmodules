@@ -1,0 +1,3 @@
+[submodule ".claude/skill-source"]
+	path = .claude/skill-source
+	url = https://github.com/boost-consulting/claude-code-skill-example-aibara
