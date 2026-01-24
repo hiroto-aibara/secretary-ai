@@ -1,6 +1,8 @@
 [tools]
 go = "latest"
 node = "22"
+"go:github.com/golangci/golangci-lint/cmd/golangci-lint" = "latest"
+"go:golang.org/x/tools/cmd/goimports" = "latest"
 
 [tasks.build]
 description = "Build frontend and Go binary"
@@ -16,6 +18,38 @@ run = "go run ./cmd/taskmgr"
 [tasks."dev:front"]
 description = "Run frontend dev server"
 run = "cd web && npm run dev"
+
+[tasks.fmt]
+description = "Format all code"
+run = """
+goimports -w ./internal/ ./cmd/
+cd web && npx prettier --write 'src/**/*.{ts,tsx}'
+"""
+
+[tasks.lint]
+description = "Run all linters"
+run = """
+golangci-lint run ./...
+cd web && npx tsc --noEmit && npx eslint src/
+"""
+
+[tasks.test]
+description = "Run all tests with coverage"
+run = "go test -cover ./internal/..."
+
+[tasks."test:coverage"]
+description = "Generate coverage report and check threshold (80%)"
+run = """
+go test -coverprofile=coverage.out ./internal/...
+go tool cover -func=coverage.out
+COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
+echo "Total coverage: ${COVERAGE}%"
+if [ "$(echo "$COVERAGE < 80" | bc -l)" -eq 1 ]; then
+  echo "FAIL: Coverage ${COVERAGE}% is below threshold 80%"
+  exit 1
+fi
+echo "OK: Coverage meets threshold"
+"""
 
 [tasks.clean]
 description = "Clean build artifacts"

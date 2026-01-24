@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "devDependencies": {
+    "husky": "^9",
+    "lint-staged": "^15"
+  },
+  "lint-staged": {
+    "*.go": "mise exec -- goimports -w",
+    "web/src/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  },
+  "scripts": {
+    "prepare": "husky"
+  }
+}
