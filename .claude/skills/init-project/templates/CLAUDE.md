@@ -20,11 +20,11 @@ handler → usecase → domain ← infra
 ## コマンド
 
 ```bash
-mise run fmt              # フォーマット（goimports + prettier）
-mise run lint             # リントチェック（golangci-lint + tsc + eslint）
+mise run fmt              # フォーマット
+mise run lint             # リントチェック
 mise run test             # テスト実行（カバレッジ表示付き）
 mise run test:coverage    # カバレッジレポート + 閾値チェック（80%）
-mise run dev              # Go サーバー起動
+mise run dev              # サーバー起動
 mise run dev:front        # フロント dev サーバー起動
 mise run build            # プロダクションビルド
 ```
@@ -35,4 +35,4 @@ mise run build            # プロダクションビルド
 - エラー判別は `errors.As` / `errors.Is` を使用
 - ログは `log/slog` を使用（構造化ログ、小文字開始）
 - テストはテーブル駆動、モックは手書き、カバレッジ目標80%
-- DI はコンストラクタ注入、配線は `cmd/taskmgr/main.go` に集約
+- DI はコンストラクタ注入、配線は `cmd/<app>/main.go` に集約

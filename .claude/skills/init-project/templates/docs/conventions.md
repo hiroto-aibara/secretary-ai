@@ -23,8 +23,6 @@
 // domain/errors.go
 package domain
 
-import "fmt"
-
 type ErrNotFound struct {
     Resource string
     ID       string
@@ -39,17 +37,9 @@ type ErrValidation struct {
     Message string
 }
 
-func (e *ErrValidation) Error() string {
-    return fmt.Sprintf("validation error: %s %s", e.Field, e.Message)
-}
-
 type ErrConflict struct {
     Resource string
     ID       string
-}
-
-func (e *ErrConflict) Error() string {
-    return fmt.Sprintf("%s %s already exists", e.Resource, e.ID)
 }
 ```
 
@@ -89,7 +79,7 @@ func writeError(w http.ResponseWriter, err error) {
 |----------|-----------|------|
 | domain | エンティティのバリデーション・振る舞い | ユニットテスト |
 | usecase | ビジネスロジック | リポジトリインターフェースをモック |
-| infra/yaml | YAML読み書きの正確性 | 一時ディレクトリ使用の統合テスト |
+| infra | データ読み書きの正確性 | 一時ディレクトリ使用の統合テスト |
 | handler | HTTPリクエスト/レスポンス | httptest + usecaseモック |
 
 ### テストスタイル
@@ -97,46 +87,28 @@ func writeError(w http.ResponseWriter, err error) {
 - **テーブル駆動テスト**を標準とする
 
 ```go
-func TestCardUseCase_Archive(t *testing.T) {
+func TestExample_Method(t *testing.T) {
     tests := []struct {
         name    string
-        cardID  string
-        setup   func(*mockCardRepo)
+        input   string
+        want    string
         wantErr error
     }{
         {
-            name:   "success",
-            cardID: "20260124-001",
-            setup: func(m *mockCardRepo) {
-                m.card = &domain.Card{ID: "20260124-001", Archived: false}
-            },
-            wantErr: nil,
+            name:  "success",
+            input: "valid",
+            want:  "expected",
         },
         {
-            name:   "not found",
-            cardID: "nonexistent",
-            setup: func(m *mockCardRepo) {
-                m.err = &domain.ErrNotFound{Resource: "card", ID: "nonexistent"}
-            },
+            name:    "not found",
+            input:   "invalid",
             wantErr: &domain.ErrNotFound{},
         },
     }
 
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            mock := &mockCardRepo{}
-            tt.setup(mock)
-            uc := usecase.NewCardUseCase(mock, nil)
-
-            _, err := uc.Archive(context.Background(), "board-1", tt.cardID)
-
-            if tt.wantErr != nil {
-                if !errors.As(err, &tt.wantErr) {
-                    t.Errorf("got %v, want %v", err, tt.wantErr)
-                }
-            } else if err != nil {
-                t.Errorf("unexpected error: %v", err)
-            }
+            // test logic
         })
     }
 }
@@ -146,18 +118,6 @@ func TestCardUseCase_Archive(t *testing.T) {
 
 - 手書きモック（インターフェースが小さいため外部ライブラリ不要）
 - テストファイル内に定義（`*_test.go`）
-
-```go
-type mockCardRepo struct {
-    card *domain.Card
-    err  error
-}
-
-func (m *mockCardRepo) Get(ctx context.Context, boardID, cardID string) (*domain.Card, error) {
-    return m.card, m.err
-}
-// ... 他メソッドも同様
-```
 
 ### テスト命名規則
 
@@ -187,29 +147,25 @@ mise run test:coverage    # カバレッジレポート生成 + 閾値チェッ�
 
 ### ライブラリ
 
-`log/slog`（Go標準ライブラリ）を使用。外部依存なし。
+`log/slog`（Go標準ライブラリ）を使用。
 
 ### ログレベル
 
 | レベル | 用途 | 例 |
 |--------|------|-----|
-| Error | 処理継続不能な障害 | YAML書き込み失敗、ファイル監視エラー |
-| Warn | 回復可能だが注意が必要 | 不正なYAMLファイルのスキップ |
-| Info | 操作の記録 | サーバー起動、カード作成/移動 |
-| Debug | 開発時の詳細情報 | リクエストボディ、ファイル変更検知 |
+| Error | 処理継続不能な障害 | 書き込み失敗、監視エラー |
+| Warn | 回復可能だが注意が必要 | 不正データのスキップ |
+| Info | 操作の記録 | サーバー起動、リソース作成/更新 |
+| Debug | 開発時の詳細情報 | リクエストボディ、変更検知 |
 
 ### 書式
 
 ```go
 // 構造化ログを使用（キーバリューペア）
-slog.Info("card created", "board_id", boardID, "card_id", card.ID)
-slog.Error("failed to save card", "board_id", boardID, "card_id", cardID, "error", err)
+slog.Info("resource created", "id", id)
+slog.Error("failed to save", "id", id, "error", err)
 
 // メッセージは小文字開始、簡潔に
-// Good
-slog.Info("card moved", "card_id", id, "from", oldList, "to", newList)
-// Bad
-slog.Info("The card has been successfully moved to a new list", ...)
 ```
 
 ### レイヤーごとのルール
@@ -219,10 +175,9 @@ slog.Info("The card has been successfully moved to a new list", ...)
 | handler | リクエスト受信（Info）、エラーレスポンス（Warn/Error） |
 | usecase | 書かない（handler に委譲） |
 | infra | IO障害（Error）、リトライ（Warn） |
-| watcher | ファイル変更検知（Debug）、監視エラー（Error） |
 
 ### 禁止事項
 
 - `fmt.Println` をログに使わない
 - エラーを握りつぶさない（ログ出力するか、上位に返す）
-- パスワード・トークン等の機密情報をログに含めない
+- 機密情報をログに含めない

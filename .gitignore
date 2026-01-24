@@ -1,5 +1,6 @@
 # Go
 bin/
+coverage.out
 *.exe
 *.exe~
 *.dll

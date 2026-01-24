@@ -101,11 +101,18 @@ run = "rm -rf bin/ dist/"
 
 プロジェクト概要とドキュメントへのリンクを含む。
 技術スタック固有の情報は init-backend / init-frontend が追記する。
+テンプレート: `templates/CLAUDE.md`
 
 ### docs/ テンプレート
 
-各ファイルにはセクション見出しのみを含むテンプレートを生成。
-ユーザーが対話的に内容を埋めるか、create-design-doc スキルで生成する。
+レイヤー設計・API仕様・開発規約のテンプレートを配置する。
+ユーザーが対話的にプロジェクト固有の内容を埋める。
+テンプレート: `templates/docs/`
+
+### mise.toml（スケルトン）
+
+clean タスクのみ定義。技術スタック固有のツール・タスクは init-backend / init-frontend が追記する。
+テンプレート: `templates/mise.toml`
 
 ### dependabot.yml
 
@@ -139,5 +146,3 @@ init-project 完了後、技術スタックに応じて以下を実行：
 
 - `init-go-backend`: Go バックエンドセットアップ
 - `init-react-frontend`: React フロントエンドセットアップ
-- `create-design-doc`: 設計ドキュメント作成
-- `create-feature-brief`: 要件定義作成

@@ -34,7 +34,7 @@ Go バックエンドのセットアップを行います。
         ↓
 5. mise.toml 更新
    - Go ツール追加（golangci-lint, goimports）
-   - タスク追加（build, dev, test, fmt, lint）
+   - タスク追加（build, dev, test, test:coverage, fmt, lint）
         ↓
 6. Pre-commit hook 更新
    - lint-staged に Go 設定追加（goimports）

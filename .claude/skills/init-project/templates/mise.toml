@@ -1,0 +1,6 @@
+[tools]
+# 技術スタックに応じて init-go-backend / init-react-frontend が追加
+
+[tasks.clean]
+description = "Clean build artifacts"
+run = "rm -rf bin/ dist/"
