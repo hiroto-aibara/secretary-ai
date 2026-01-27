@@ -19,7 +19,13 @@
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+.boardSelector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .logo {
@@ -49,6 +55,34 @@
 
 .archiveBtn:hover {
   background: #64748b;
+}
+
+.newBoardBtn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.newBoardBtn:hover {
+  background: #2563eb;
+}
+
+.deleteBoardBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+.deleteBoardBtn:hover {
+  color: #ef4444;
 }
 
 .empty {

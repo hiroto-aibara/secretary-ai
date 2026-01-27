@@ -14,7 +14,26 @@
   font-weight: 600;
   color: #475569;
   margin-bottom: 12px;
-  padding: 0 4px;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.header:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.headerInput {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 12px;
+  padding: 4px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
 }
 
 .cards {
