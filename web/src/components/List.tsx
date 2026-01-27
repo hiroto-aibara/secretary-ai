@@ -11,9 +11,17 @@ interface Props {
   onCardClick: (card: CardType) => void
   onAddCard: (title: string) => void
   onRename: (newName: string) => void
+  onDelete: () => void
 }
 
-export function List({ list, cards, onCardClick, onAddCard, onRename }: Props) {
+export function List({
+  list,
+  cards,
+  onCardClick,
+  onAddCard,
+  onRename,
+  onDelete,
+}: Props) {
   const [adding, setAdding] = useState(false)
   const [title, setTitle] = useState('')
   const [editing, setEditing] = useState(false)
@@ -61,20 +69,30 @@ export function List({ list, cards, onCardClick, onAddCard, onRename }: Props) {
 
   return (
     <div className={styles.list} ref={setNodeRef}>
-      {editing ? (
-        <input
-          ref={inputRef}
-          className={styles.headerInput}
-          value={editName}
-          onChange={(e) => setEditName(e.target.value)}
-          onBlur={handleRenameSubmit}
-          onKeyDown={handleRenameKeyDown}
-        />
-      ) : (
-        <div className={styles.header} onClick={handleStartEdit}>
-          {list.name}
-        </div>
-      )}
+      <div className={styles.headerRow}>
+        {editing ? (
+          <input
+            ref={inputRef}
+            className={styles.headerInput}
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            onBlur={handleRenameSubmit}
+            onKeyDown={handleRenameKeyDown}
+          />
+        ) : (
+          <div className={styles.header} onClick={handleStartEdit}>
+            {list.name}
+          </div>
+        )}
+        <button
+          className={styles.deleteListBtn}
+          onClick={onDelete}
+          title="Delete list"
+          aria-label="Delete list"
+        >
+          &times;
+        </button>
+      </div>
       <SortableContext
         items={cards.map((c) => c.id)}
         strategy={verticalListSortingStrategy}

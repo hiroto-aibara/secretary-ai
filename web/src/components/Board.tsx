@@ -145,6 +145,24 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
     }
   }
 
+  const handleDeleteList = async (listId: string) => {
+    const listCards = getCardsForList(listId)
+    const message =
+      listCards.length > 0
+        ? `This list contains ${listCards.length} card(s). Are you sure you want to delete it?`
+        : 'Are you sure you want to delete this list?'
+
+    if (!window.confirm(message)) return
+
+    try {
+      const updatedLists = board.lists.filter((l) => l.id !== listId)
+      await api.boards.update(board.id, { lists: updatedLists })
+      onBoardUpdate()
+    } catch (err) {
+      console.error('Failed to delete list:', err)
+    }
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -160,6 +178,7 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
             onCardClick={setSelectedCard}
             onAddCard={(title) => handleAddCard(list.id, title)}
             onRename={(newName) => handleRenameList(list.id, newName)}
+            onDelete={() => handleDeleteList(list.id)}
           />
         ))}
         <AddList onAdd={handleAddList} />
