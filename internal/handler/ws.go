@@ -16,7 +16,15 @@ var upgrader = websocket.Upgrader{
 			return true // non-browser clients
 		}
 		host := r.Host
-		return origin == "http://"+host || origin == "https://"+host
+		// Allow same-origin requests
+		if origin == "http://"+host || origin == "https://"+host {
+			return true
+		}
+		// Allow Vite dev server (proxied requests)
+		if origin == "http://localhost:5173" || origin == "http://127.0.0.1:5173" {
+			return true
+		}
+		return false
 	},
 }
 

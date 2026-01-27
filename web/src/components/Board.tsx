@@ -32,7 +32,7 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
 
   const getCardsForList = useCallback(
     (listId: string) =>
-      cards
+      (cards ?? [])
         .filter((c) => c.list === listId && !c.archived)
         .sort((a, b) => a.order - b.order),
     [cards],
@@ -41,7 +41,7 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
   const handleDragOver = (event: DragOverEvent) => {
     const { over } = event
     if (over) {
-      const overCard = cards.find((c) => c.id === over.id)
+      const overCard = (cards ?? []).find((c) => c.id === over.id)
       setDragOverList(overCard ? overCard.list : (over.id as string))
     }
   }
@@ -52,11 +52,11 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
 
     if (!over || active.id === over.id) return
 
-    const activeCard = cards.find((c) => c.id === active.id)
+    const activeCard = (cards ?? []).find((c) => c.id === active.id)
     if (!activeCard) return
 
     // Determine target list
-    const overCard = cards.find((c) => c.id === over.id)
+    const overCard = (cards ?? []).find((c) => c.id === over.id)
     const targetList = overCard ? overCard.list : (over.id as string)
 
     // Determine order

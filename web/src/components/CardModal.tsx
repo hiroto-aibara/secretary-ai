@@ -22,10 +22,14 @@ export function CardModal({
   const [labelsText, setLabelsText] = useState((card.labels ?? []).join(', '))
 
   const handleSave = () => {
-    const labels = labelsText
-      .split(',')
-      .map((l) => l.trim())
-      .filter(Boolean)
+    const labels = [
+      ...new Set(
+        labelsText
+          .split(',')
+          .map((l) => l.trim())
+          .filter(Boolean),
+      ),
+    ]
     onSave({ title, description, labels })
   }
 
