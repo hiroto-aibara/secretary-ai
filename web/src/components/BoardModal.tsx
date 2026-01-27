@@ -7,11 +7,10 @@ interface Props {
 }
 
 export function BoardModal({ onClose, onCreate }: Props) {
-  const [id, setId] = useState('')
   const [name, setName] = useState('')
   const [listsText, setListsText] = useState('Todo, In Progress, Done')
 
-  const sanitizeId = (input: string): string => {
+  const generateId = (input: string): string => {
     return input
       .trim()
       .toLowerCase()
@@ -19,19 +18,18 @@ export function BoardModal({ onClose, onCreate }: Props) {
       .replace(/^-|-$/g, '')
   }
 
+  const generatedId = generateId(name)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!id.trim() || !name.trim()) return
-
-    const sanitizedId = sanitizeId(id)
-    if (!sanitizedId) return
+    if (!name.trim() || !generatedId) return
 
     const lists = listsText
       .split(',')
       .map((l) => l.trim())
       .filter(Boolean)
 
-    onCreate(sanitizedId, name.trim(), lists)
+    onCreate(generatedId, name.trim(), lists)
   }
 
   return (
@@ -45,24 +43,21 @@ export function BoardModal({ onClose, onCreate }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className={styles.body}>
-          <label className={styles.fieldLabel}>Board ID</label>
-          <input
-            className={styles.input}
-            value={id}
-            onChange={(e) => setId(e.target.value)}
-            placeholder="e.g., project-alpha"
-            autoFocus
-          />
-
           <label className={styles.fieldLabel}>Board Name</label>
           <input
             className={styles.input}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Project Alpha"
+            autoFocus
           />
+          {generatedId && (
+            <div className={styles.idPreview}>ID: {generatedId}</div>
+          )}
 
-          <label className={styles.fieldLabel}>Initial Lists (comma-separated)</label>
+          <label className={styles.fieldLabel}>
+            Initial Lists (comma-separated)
+          </label>
           <input
             className={styles.input}
             value={listsText}
@@ -71,13 +66,17 @@ export function BoardModal({ onClose, onCreate }: Props) {
           />
 
           <div className={styles.footer}>
-            <button type="button" className={styles.cancelBtn} onClick={onClose}>
+            <button
+              type="button"
+              className={styles.cancelBtn}
+              onClick={onClose}
+            >
               Cancel
             </button>
             <button
               type="submit"
               className={styles.createBtn}
-              disabled={!id.trim() || !name.trim()}
+              disabled={!name.trim() || !generatedId}
             >
               Create Board
             </button>

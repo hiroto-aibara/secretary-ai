@@ -12,7 +12,11 @@ export function useWebSocket(onEvent: (event: WSEvent) => void) {
   })
 
   useEffect(() => {
+    let isActive = true
+
     const connect = () => {
+      if (!isActive) return
+
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const ws = new WebSocket(`${protocol}//${window.location.host}/ws`)
 
@@ -27,11 +31,19 @@ export function useWebSocket(onEvent: (event: WSEvent) => void) {
 
       ws.onclose = () => {
         wsRef.current = null
-        reconnectTimer.current = setTimeout(() => connectRef.current?.(), 3000)
+        if (isActive) {
+          reconnectTimer.current = setTimeout(
+            () => connectRef.current?.(),
+            3000,
+          )
+        }
       }
 
       ws.onerror = () => {
-        ws.close()
+        // Only close if connection was established
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close()
+        }
       }
 
       wsRef.current = ws
@@ -41,8 +53,13 @@ export function useWebSocket(onEvent: (event: WSEvent) => void) {
     connect()
 
     return () => {
+      isActive = false
       clearTimeout(reconnectTimer.current)
-      wsRef.current?.close()
+      const ws = wsRef.current
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close()
+      }
+      wsRef.current = null
     }
   }, [])
 }

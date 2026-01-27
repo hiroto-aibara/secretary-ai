@@ -42,10 +42,18 @@ export function AddList({ onAdd }: Props) {
           autoFocus
         />
         <div className={styles.actions}>
-          <button type="submit" className={styles.addBtn} disabled={!name.trim()}>
+          <button
+            type="submit"
+            className={styles.addBtn}
+            disabled={!name.trim()}
+          >
             Add
           </button>
-          <button type="button" className={styles.cancelBtn} onClick={handleCancel}>
+          <button
+            type="button"
+            className={styles.cancelBtn}
+            onClick={handleCancel}
+          >
             Cancel
           </button>
         </div>

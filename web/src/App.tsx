@@ -36,14 +36,14 @@ function App() {
     const boardId = selectedBoardIdRef.current
     if (!boardId) return
     const data = await api.cards.list(boardId)
-    setCards(data)
+    setCards(data ?? [])
   }, [])
 
   const loadAllCards = useCallback(async () => {
     const boardId = selectedBoardIdRef.current
     if (!boardId) return
     const data = await api.cards.list(boardId, true)
-    setAllCards(data)
+    setAllCards(data ?? [])
   }, [])
 
   useEffect(() => {
@@ -65,7 +65,7 @@ function App() {
     let active = true
     api.cards.list(selectedBoardId).then((data) => {
       if (!active) return
-      setCards(data)
+      setCards(data ?? [])
     })
     return () => {
       active = false
@@ -104,11 +104,15 @@ function App() {
       await api.boards.create({
         id,
         name,
-        lists: lists.map((listName) => ({ id: generateListId(listName), name: listName })),
+        lists: lists.map((listName) => ({
+          id: generateListId(listName),
+          name: listName,
+        })),
       })
       setShowBoardModal(false)
       const data = await api.boards.list()
       setBoards(data)
+      setCards([])
       setSelectedBoardId(id)
     } catch (err) {
       console.error('Failed to create board:', err)
@@ -194,7 +198,12 @@ function App() {
       </header>
 
       {selectedBoard ? (
-        <Board board={selectedBoard} cards={cards} onRefresh={loadCards} onBoardUpdate={handleBoardUpdate} />
+        <Board
+          board={selectedBoard}
+          cards={cards}
+          onRefresh={loadCards}
+          onBoardUpdate={handleBoardUpdate}
+        />
       ) : (
         <div className={styles.empty}>
           <p>No boards found. Click "+ New Board" to create one.</p>

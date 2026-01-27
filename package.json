@@ -7,8 +7,8 @@
   "lint-staged": {
     "*.go": "mise exec -- goimports -w",
     "web/src/**/*.{ts,tsx}": [
-      "prettier --write",
-      "eslint --fix"
+      "npx prettier --write",
+      "npx eslint --config web/eslint.config.js --fix"
     ]
   },
   "scripts": {
