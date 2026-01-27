@@ -11,16 +11,27 @@ export function BoardModal({ onClose, onCreate }: Props) {
   const [name, setName] = useState('')
   const [listsText, setListsText] = useState('Todo, In Progress, Done')
 
+  const sanitizeId = (input: string): string => {
+    return input
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!id.trim() || !name.trim()) return
+
+    const sanitizedId = sanitizeId(id)
+    if (!sanitizedId) return
 
     const lists = listsText
       .split(',')
       .map((l) => l.trim())
       .filter(Boolean)
 
-    onCreate(id.trim(), name.trim(), lists)
+    onCreate(sanitizedId, name.trim(), lists)
   }
 
   return (

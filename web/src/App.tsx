@@ -15,6 +15,7 @@ function App() {
   const [showArchive, setShowArchive] = useState(false)
   const [allCards, setAllCards] = useState<CardType[]>([])
   const [showBoardModal, setShowBoardModal] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const selectedBoard = boards.find((b) => b.id === selectedBoardId) || null
   const selectedBoardIdRef = useRef(selectedBoardId)
@@ -99,6 +100,7 @@ function App() {
     lists: string[],
   ) => {
     try {
+      setError(null)
       await api.boards.create({
         id,
         name,
@@ -110,6 +112,7 @@ function App() {
       setSelectedBoardId(id)
     } catch (err) {
       console.error('Failed to create board:', err)
+      setError('Failed to create board. Please try again.')
     }
   }
 
@@ -121,6 +124,7 @@ function App() {
     if (!confirmed) return
 
     try {
+      setError(null)
       await api.boards.delete(selectedBoardId)
       const data = await api.boards.list()
       setBoards(data)
@@ -128,6 +132,7 @@ function App() {
       setCards([])
     } catch (err) {
       console.error('Failed to delete board:', err)
+      setError('Failed to delete board. Please try again.')
     }
   }
 
@@ -138,6 +143,18 @@ function App() {
 
   return (
     <div className={styles.app}>
+      {error && (
+        <div className={styles.errorBanner}>
+          {error}
+          <button
+            className={styles.errorCloseBtn}
+            onClick={() => setError(null)}
+            aria-label="Close error message"
+          >
+            &times;
+          </button>
+        </div>
+      )}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <h1 className={styles.logo}>TaskMgr</h1>
@@ -158,6 +175,7 @@ function App() {
                 className={styles.deleteBoardBtn}
                 onClick={handleDeleteBoard}
                 title="Delete board"
+                aria-label="Delete board"
               >
                 &times;
               </button>
