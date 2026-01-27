@@ -4,6 +4,8 @@ import { api } from './hooks/useApi'
 import { useWebSocket } from './hooks/useWebSocket'
 import { Board } from './components/Board'
 import { ArchiveView } from './components/ArchiveView'
+import { BoardModal } from './components/BoardModal'
+import { generateListId } from './utils/id'
 import styles from './App.module.css'
 
 function App() {
@@ -12,6 +14,8 @@ function App() {
   const [cards, setCards] = useState<CardType[]>([])
   const [showArchive, setShowArchive] = useState(false)
   const [allCards, setAllCards] = useState<CardType[]>([])
+  const [showBoardModal, setShowBoardModal] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const selectedBoard = boards.find((b) => b.id === selectedBoardId) || null
   const selectedBoardIdRef = useRef(selectedBoardId)
@@ -90,24 +94,99 @@ function App() {
     loadCards()
   }
 
+  const handleCreateBoard = async (
+    id: string,
+    name: string,
+    lists: string[],
+  ) => {
+    try {
+      setError(null)
+      await api.boards.create({
+        id,
+        name,
+        lists: lists.map((listName) => ({ id: generateListId(listName), name: listName })),
+      })
+      setShowBoardModal(false)
+      const data = await api.boards.list()
+      setBoards(data)
+      setSelectedBoardId(id)
+    } catch (err) {
+      console.error('Failed to create board:', err)
+      setError('Failed to create board. Please try again.')
+    }
+  }
+
+  const handleDeleteBoard = async () => {
+    if (!selectedBoardId) return
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${selectedBoard?.name}"? This action cannot be undone.`,
+    )
+    if (!confirmed) return
+
+    try {
+      setError(null)
+      await api.boards.delete(selectedBoardId)
+      const data = await api.boards.list()
+      setBoards(data)
+      setSelectedBoardId(data.length > 0 ? data[0].id : null)
+      setCards([])
+    } catch (err) {
+      console.error('Failed to delete board:', err)
+      setError('Failed to delete board. Please try again.')
+    }
+  }
+
+  const handleBoardUpdate = async () => {
+    await loadBoards()
+    loadCards()
+  }
+
   return (
     <div className={styles.app}>
+      {error && (
+        <div className={styles.errorBanner}>
+          {error}
+          <button
+            className={styles.errorCloseBtn}
+            onClick={() => setError(null)}
+            aria-label="Close error message"
+          >
+            &times;
+          </button>
+        </div>
+      )}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <h1 className={styles.logo}>TaskMgr</h1>
-          {boards.length > 1 && (
-            <select
-              className={styles.boardSelect}
-              value={selectedBoardId || ''}
-              onChange={(e) => setSelectedBoardId(e.target.value)}
-            >
-              {boards.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+          {boards.length > 0 && (
+            <div className={styles.boardSelector}>
+              <select
+                className={styles.boardSelect}
+                value={selectedBoardId || ''}
+                onChange={(e) => setSelectedBoardId(e.target.value)}
+              >
+                {boards.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                className={styles.deleteBoardBtn}
+                onClick={handleDeleteBoard}
+                title="Delete board"
+                aria-label="Delete board"
+              >
+                &times;
+              </button>
+            </div>
           )}
+          <button
+            className={styles.newBoardBtn}
+            onClick={() => setShowBoardModal(true)}
+          >
+            + New Board
+          </button>
         </div>
         <button className={styles.archiveBtn} onClick={handleShowArchive}>
           Archive
@@ -115,10 +194,10 @@ function App() {
       </header>
 
       {selectedBoard ? (
-        <Board board={selectedBoard} cards={cards} onRefresh={loadCards} />
+        <Board board={selectedBoard} cards={cards} onRefresh={loadCards} onBoardUpdate={handleBoardUpdate} />
       ) : (
         <div className={styles.empty}>
-          <p>No boards found. Create one via API.</p>
+          <p>No boards found. Click "+ New Board" to create one.</p>
         </div>
       )}
 
@@ -127,6 +206,13 @@ function App() {
           cards={allCards}
           onRestore={handleRestore}
           onClose={() => setShowArchive(false)}
+        />
+      )}
+
+      {showBoardModal && (
+        <BoardModal
+          onClose={() => setShowBoardModal(false)}
+          onCreate={handleCreateBoard}
         />
       )}
     </div>

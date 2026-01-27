@@ -10,16 +10,19 @@ import {
 import type { Board as BoardType, Card as CardType } from '../types'
 import { List } from './List'
 import { CardModal } from './CardModal'
+import { AddList } from './AddList'
 import { api } from '../hooks/useApi'
+import { generateUniqueListId } from '../utils/id'
 import styles from './Board.module.css'
 
 interface Props {
   board: BoardType
   cards: CardType[]
   onRefresh: () => void
+  onBoardUpdate: () => void
 }
 
-export function Board({ board, cards, onRefresh }: Props) {
+export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null)
   const [dragOverList, setDragOverList] = useState<string | null>(null)
 
@@ -118,6 +121,48 @@ export function Board({ board, cards, onRefresh }: Props) {
     }
   }
 
+  const handleAddList = async (name: string) => {
+    try {
+      const existingIds = new Set(board.lists.map((l) => l.id))
+      const newListId = generateUniqueListId(name, existingIds)
+      const updatedLists = [...board.lists, { id: newListId, name }]
+      await api.boards.update(board.id, { lists: updatedLists })
+      onBoardUpdate()
+    } catch (err) {
+      console.error('Failed to add list:', err)
+    }
+  }
+
+  const handleRenameList = async (listId: string, newName: string) => {
+    try {
+      const updatedLists = board.lists.map((l) =>
+        l.id === listId ? { ...l, name: newName } : l,
+      )
+      await api.boards.update(board.id, { lists: updatedLists })
+      onBoardUpdate()
+    } catch (err) {
+      console.error('Failed to rename list:', err)
+    }
+  }
+
+  const handleDeleteList = async (listId: string) => {
+    const listCards = getCardsForList(listId)
+    const message =
+      listCards.length > 0
+        ? `This list contains ${listCards.length} card(s). Are you sure you want to delete it?`
+        : 'Are you sure you want to delete this list?'
+
+    if (!window.confirm(message)) return
+
+    try {
+      const updatedLists = board.lists.filter((l) => l.id !== listId)
+      await api.boards.update(board.id, { lists: updatedLists })
+      onBoardUpdate()
+    } catch (err) {
+      console.error('Failed to delete list:', err)
+    }
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -132,8 +177,11 @@ export function Board({ board, cards, onRefresh }: Props) {
             cards={getCardsForList(list.id)}
             onCardClick={setSelectedCard}
             onAddCard={(title) => handleAddCard(list.id, title)}
+            onRename={(newName) => handleRenameList(list.id, newName)}
+            onDelete={() => handleDeleteList(list.id)}
           />
         ))}
+        <AddList onAdd={handleAddList} />
       </div>
 
       {selectedCard && (
