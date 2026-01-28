@@ -1,0 +1,11 @@
+[build]
+cmd = "go build -o ./tmp/main ./cmd/taskmgr"
+bin = "./tmp/main"
+include_ext = ["go"]
+exclude_dir = ["tmp", "web", "node_modules", ".git"]
+
+[log]
+time = false
+
+[misc]
+clean_on_exit = true
