@@ -9,6 +9,12 @@ export interface Board {
   lists: List[]
 }
 
+export interface TodoItem {
+  id: string
+  text: string
+  completed: boolean
+}
+
 export interface Card {
   id: string
   title: string
@@ -16,6 +22,7 @@ export interface Card {
   order: number
   description: string
   labels: string[]
+  todos: TodoItem[]
   archived: boolean
   created_at: string
   updated_at: string

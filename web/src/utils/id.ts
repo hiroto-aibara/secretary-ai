@@ -5,6 +5,10 @@ export function generateListId(name: string): string {
     .replace(/^-|-$/g, '')
 }
 
+export function generateTodoId(): string {
+  return crypto.randomUUID()
+}
+
 export function generateUniqueListId(
   name: string,
   existingIds: Set<string>,

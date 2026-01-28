@@ -492,6 +492,33 @@ func TestCardUseCase_Update_PartialFields(t *testing.T) {
 	}
 }
 
+func TestCardUseCase_Update_Todos(t *testing.T) {
+	cardRepo := &mockCardRepo{
+		card: &domain.Card{ID: "card-1", Title: "Original", List: "todo"},
+	}
+	boardRepo := &mockBoardRepo{}
+	uc := usecase.NewCardUseCase(cardRepo, boardRepo)
+
+	todos := []domain.TodoItem{
+		{ID: "todo-1", Text: "Task 1", Completed: false},
+		{ID: "todo-2", Text: "Task 2", Completed: true},
+	}
+
+	got, err := uc.Update(context.Background(), "board-1", "card-1", &domain.Card{Todos: todos})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(got.Todos) != 2 {
+		t.Errorf("Todos length = %d, want 2", len(got.Todos))
+	}
+	if got.Todos[0].Text != "Task 1" {
+		t.Errorf("Todos[0].Text = %s, want Task 1", got.Todos[0].Text)
+	}
+	if got.Todos[1].Completed != true {
+		t.Errorf("Todos[1].Completed = %v, want true", got.Todos[1].Completed)
+	}
+}
+
 func TestCardUseCase_Delete(t *testing.T) {
 	tests := []struct {
 		name    string

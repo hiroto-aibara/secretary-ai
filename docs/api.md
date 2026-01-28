@@ -66,7 +66,11 @@
   "title": "新機能の設計",
   "list": "todo",
   "description": "詳細な仕様を決める",
-  "labels": ["feature"]
+  "labels": ["feature"],
+  "todos": [
+    {"id": "uuid-1", "text": "要件定義", "completed": false},
+    {"id": "uuid-2", "text": "技術調査", "completed": true}
+  ]
 }
 
 // Response 201
@@ -77,6 +81,10 @@
   "order": 0,
   "description": "詳細な仕様を決める",
   "labels": ["feature"],
+  "todos": [
+    {"id": "uuid-1", "text": "要件定義", "completed": false},
+    {"id": "uuid-2", "text": "技術調査", "completed": true}
+  ],
   "archived": false,
   "created_at": "2026-01-24T10:00:00+09:00",
   "updated_at": "2026-01-24T10:00:00+09:00"
@@ -89,13 +97,19 @@
 // Request（部分更新可）
 {
   "title": "更新されたタイトル",
-  "description": "更新された説明"
+  "description": "更新された説明",
+  "todos": [
+    {"id": "uuid-1", "text": "要件定義", "completed": true},
+    {"id": "uuid-2", "text": "技術調査", "completed": true},
+    {"id": "uuid-3", "text": "実装開始", "completed": false}
+  ]
 }
 
 // Response 200
 {
   "id": "20260124-001",
   "title": "更新されたタイトル",
+  "todos": [...],
   ...
 }
 ```
