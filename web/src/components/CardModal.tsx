@@ -138,6 +138,7 @@ export function CardModal({
                       value={editingTodoText}
                       onChange={(e) => setEditingTodoText(e.target.value)}
                       onKeyDown={(e) => {
+                        if (e.nativeEvent.isComposing) return
                         if (e.key === 'Enter') handleSaveEditTodo()
                         if (e.key === 'Escape') handleCancelEditTodo()
                       }}
@@ -183,7 +184,11 @@ export function CardModal({
               placeholder="Add a new todo..."
               value={newTodoText}
               onChange={(e) => setNewTodoText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddTodo()}
+              onKeyDown={(e) =>
+                e.key === 'Enter' &&
+                !e.nativeEvent.isComposing &&
+                handleAddTodo()
+              }
               className={styles.todoAddInput}
             />
             <button onClick={handleAddTodo} className={styles.todoAddBtn}>
