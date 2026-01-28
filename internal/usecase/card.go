@@ -72,6 +72,9 @@ func (uc *CardUseCase) Update(ctx context.Context, boardID, cardID string, updat
 	if updates.Labels != nil {
 		existing.Labels = updates.Labels
 	}
+	if updates.Todos != nil {
+		existing.Todos = updates.Todos
+	}
 
 	existing.UpdatedAt = time.Now()
 

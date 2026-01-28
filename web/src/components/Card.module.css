@@ -29,6 +29,32 @@
   font-size: 11px;
   padding: 2px 6px;
   border-radius: 3px;
-  background: #e0e7ff;
-  color: #3730a3;
+  background: #dc2626;
+  color: #fff;
+}
+
+.todoProgress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: #22c55e;
+  transition: width 0.2s ease;
+}
+
+.progressText {
+  font-size: 11px;
+  color: #64748b;
 }

@@ -36,6 +36,26 @@ export function Card({ card, onClick }: Props) {
           ))}
         </div>
       )}
+      {(card.todos ?? []).length > 0 &&
+        (() => {
+          const todos = card.todos ?? []
+          const completed = todos.filter((t) => t.completed).length
+          const total = todos.length
+          const percent = (completed / total) * 100
+          return (
+            <div className={styles.todoProgress}>
+              <div className={styles.progressBar}>
+                <div
+                  className={styles.progressFill}
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+              <span className={styles.progressText}>
+                {completed}/{total}
+              </span>
+            </div>
+          )
+        })()}
     </div>
   )
 }

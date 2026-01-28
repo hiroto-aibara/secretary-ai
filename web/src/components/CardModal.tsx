@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { Card } from '../types'
+import type { Card, TodoItem } from '../types'
+import { generateTodoId } from '../utils/id'
 import styles from './CardModal.module.css'
 
 interface Props {
@@ -20,6 +21,10 @@ export function CardModal({
   const [title, setTitle] = useState(card.title)
   const [description, setDescription] = useState(card.description)
   const [labelsText, setLabelsText] = useState((card.labels ?? []).join(', '))
+  const [todos, setTodos] = useState<TodoItem[]>(card.todos ?? [])
+  const [newTodoText, setNewTodoText] = useState('')
+  const [editingTodoId, setEditingTodoId] = useState<string | null>(null)
+  const [editingTodoText, setEditingTodoText] = useState('')
 
   const handleSave = () => {
     const labels = [
@@ -30,8 +35,53 @@ export function CardModal({
           .filter(Boolean),
       ),
     ]
-    onSave({ title, description, labels })
+    onSave({ title, description, labels, todos })
   }
+
+  const handleAddTodo = () => {
+    if (!newTodoText.trim()) return
+    const newTodo: TodoItem = {
+      id: generateTodoId(),
+      text: newTodoText.trim(),
+      completed: false,
+    }
+    setTodos([...todos, newTodo])
+    setNewTodoText('')
+  }
+
+  const handleToggleTodo = (id: string) => {
+    setTodos(
+      todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+    )
+  }
+
+  const handleDeleteTodo = (id: string) => {
+    setTodos(todos.filter((t) => t.id !== id))
+  }
+
+  const handleStartEditTodo = (todo: TodoItem) => {
+    setEditingTodoId(todo.id)
+    setEditingTodoText(todo.text)
+  }
+
+  const handleSaveEditTodo = () => {
+    if (!editingTodoId) return
+    setTodos(
+      todos.map((t) =>
+        t.id === editingTodoId ? { ...t, text: editingTodoText.trim() } : t,
+      ),
+    )
+    setEditingTodoId(null)
+    setEditingTodoText('')
+  }
+
+  const handleCancelEditTodo = () => {
+    setEditingTodoId(null)
+    setEditingTodoText('')
+  }
+
+  const completedCount = todos.filter((t) => t.completed).length
+  const totalCount = todos.length
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -62,6 +112,89 @@ export function CardModal({
             value={labelsText}
             onChange={(e) => setLabelsText(e.target.value)}
           />
+
+          <div className={styles.checklistHeader}>
+            <label className={styles.fieldLabel}>Checklist</label>
+            {totalCount > 0 && (
+              <span className={styles.checklistProgress}>
+                {completedCount}/{totalCount} done
+              </span>
+            )}
+          </div>
+
+          <div className={styles.todoList}>
+            {todos.map((todo) => (
+              <div key={todo.id} className={styles.todoItem}>
+                <input
+                  type="checkbox"
+                  checked={todo.completed}
+                  onChange={() => handleToggleTodo(todo.id)}
+                  className={styles.todoCheckbox}
+                />
+                {editingTodoId === todo.id ? (
+                  <div className={styles.todoEditContainer}>
+                    <input
+                      type="text"
+                      value={editingTodoText}
+                      onChange={(e) => setEditingTodoText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.nativeEvent.isComposing) return
+                        if (e.key === 'Enter') handleSaveEditTodo()
+                        if (e.key === 'Escape') handleCancelEditTodo()
+                      }}
+                      className={styles.todoEditInput}
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSaveEditTodo}
+                      className={styles.todoEditSaveBtn}
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={handleCancelEditTodo}
+                      className={styles.todoEditCancelBtn}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <span
+                      className={`${styles.todoText} ${todo.completed ? styles.todoCompleted : ''}`}
+                      onClick={() => handleStartEditTodo(todo)}
+                    >
+                      {todo.text}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteTodo(todo.id)}
+                      className={styles.todoDeleteBtn}
+                    >
+                      ×
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className={styles.todoAddForm}>
+            <input
+              type="text"
+              placeholder="Add a new todo..."
+              value={newTodoText}
+              onChange={(e) => setNewTodoText(e.target.value)}
+              onKeyDown={(e) =>
+                e.key === 'Enter' &&
+                !e.nativeEvent.isComposing &&
+                handleAddTodo()
+              }
+              className={styles.todoAddInput}
+            />
+            <button onClick={handleAddTodo} className={styles.todoAddBtn}>
+              Add
+            </button>
+          </div>
 
           <div className={styles.meta}>
             <span>List: {card.list}</span>

@@ -140,3 +140,158 @@
 .deleteBtn:hover {
   background: #dc2626;
 }
+
+/* Checklist Section */
+.checklistHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.checklistProgress {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.todoList {
+  margin-top: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.todoItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 8px;
+}
+
+.todoItem:last-child {
+  border-bottom: none;
+}
+
+.todoCheckbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.todoText {
+  flex: 1;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.todoText:hover {
+  background: #f1f5f9;
+}
+
+.todoCompleted {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.todoDeleteBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.todoItem:hover .todoDeleteBtn {
+  opacity: 1;
+}
+
+.todoDeleteBtn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.todoEditContainer {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+  align-items: center;
+}
+
+.todoEditInput {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+}
+
+.todoEditSaveBtn {
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.todoEditSaveBtn:hover {
+  background: #16a34a;
+}
+
+.todoEditCancelBtn {
+  background: #94a3b8;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.todoEditCancelBtn:hover {
+  background: #64748b;
+}
+
+.todoAddForm {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.todoAddInput {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.todoAddInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.todoAddBtn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.todoAddBtn:hover {
+  background: #2563eb;
+}
