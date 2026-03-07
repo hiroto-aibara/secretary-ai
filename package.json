@@ -2,7 +2,7 @@
   "private": true,
   "devDependencies": {
     "husky": "^9",
-    "lint-staged": "^15"
+    "lint-staged": "^16"
   },
   "lint-staged": {
     "*.go": "mise exec -- goimports -w",
