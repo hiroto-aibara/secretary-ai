@@ -43,6 +43,50 @@ function createCollisionDetection(listIds: Set<string>): CollisionDetection {
       return closestCenter(filtered)
     }
 
+    // ステップ1: ポインタの X 座標でどのリスト上にあるかを判定
+    const pointerX = args.pointerCoordinates?.x
+    let targetListId: string | undefined
+    let minDist = Infinity
+
+    for (const container of args.droppableContainers) {
+      if (!listIds.has(container.id as string)) continue
+      const rect = args.droppableRects.get(container.id)
+      if (!rect) continue
+
+      if (pointerX != null && pointerX >= rect.left && pointerX <= rect.right) {
+        targetListId = container.id as string
+        break
+      }
+      const dist = Math.min(
+        Math.abs((pointerX ?? 0) - rect.left),
+        Math.abs((pointerX ?? 0) - rect.right),
+      )
+      if (dist < minDist) {
+        minDist = dist
+        targetListId = container.id as string
+      }
+    }
+
+    // ステップ2: そのリスト内のカードだけで最近接を探す
+    if (targetListId) {
+      const filtered = {
+        ...args,
+        droppableContainers: args.droppableContainers.filter((c) => {
+          if (c.id === targetListId) return true
+          if (c.id === args.active.id) return false
+          if (listIds.has(c.id as string)) return false
+          return c.data.current?.card?.list === targetListId
+        }),
+      }
+      const collisions = closestCenter(filtered)
+      const cardCollision = collisions.find((c) => !listIds.has(c.id as string))
+      if (cardCollision) return [cardCollision]
+
+      const listCollision = collisions.find((c) => listIds.has(c.id as string))
+      return listCollision ? [listCollision] : []
+    }
+
+    // フォールバック: ポインタ位置が取得できない場合
     const collisions = closestCenter(args)
     const cardCollision = collisions.find(
       (c) => !listIds.has(c.id as string) && c.id !== args.active.id,
