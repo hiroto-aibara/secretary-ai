@@ -10,3 +10,38 @@
 .dragOverlay {
   width: 256px;
 }
+
+.listOverlay {
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 280px;
+  max-width: 280px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: rotate(2deg);
+  cursor: grabbing;
+}
+
+.listOverlayHeader {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.listOverlayBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.listOverlayCard {
+  background: #fff;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #333;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}

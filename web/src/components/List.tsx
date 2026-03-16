@@ -1,5 +1,5 @@
-import { SortableContext } from '@dnd-kit/sortable'
-import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { Card as CardType, List as ListType } from '../types'
 import { Card } from './Card'
 import { useState, useRef, useEffect } from 'react'
@@ -28,7 +28,24 @@ export function List({
   const [editName, setEditName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const { setNodeRef, isOver } = useDroppable({ id: list.id })
+  const {
+    attributes: listAttributes,
+    listeners: listListeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({
+    id: list.id,
+    data: { type: 'list', list },
+  })
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  }
 
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -69,10 +86,20 @@ export function List({
 
   return (
     <div
-      className={`${styles.list}${isOver ? ` ${styles.listOver}` : ''}`}
+      className={`${styles.list}${isOver ? ` ${styles.listOver}` : ''}${isDragging ? ` ${styles.listDragging}` : ''}`}
       ref={setNodeRef}
+      style={style}
     >
       <div className={styles.headerRow}>
+        <button
+          className={styles.dragHandle}
+          ref={setActivatorNodeRef}
+          {...listAttributes}
+          {...listListeners}
+          aria-label="Drag to reorder list"
+        >
+          &#x2630;
+        </button>
         {editing ? (
           <input
             ref={inputRef}

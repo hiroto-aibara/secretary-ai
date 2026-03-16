@@ -10,7 +10,7 @@ interface Props {
 export function Card({ card, onClick }: Props) {
   const { attributes, listeners, setNodeRef, isDragging } = useSortable({
     id: card.id,
-    data: { card },
+    data: { type: 'card', card },
   })
 
   return (

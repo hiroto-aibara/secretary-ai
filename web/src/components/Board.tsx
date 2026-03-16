@@ -11,7 +11,16 @@ import {
   useSensors,
   type CollisionDetection,
 } from '@dnd-kit/core'
-import type { Board as BoardType, Card as CardType } from '../types'
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import type {
+  Board as BoardType,
+  Card as CardType,
+  List as ListType,
+} from '../types'
 import { List } from './List'
 import { CardModal } from './CardModal'
 import { AddList } from './AddList'
@@ -20,8 +29,20 @@ import { generateUniqueListId } from '../utils/id'
 import styles from './Board.module.css'
 import cardStyles from './Card.module.css'
 
-function createCardFirstCollision(listIds: Set<string>): CollisionDetection {
+function createCollisionDetection(listIds: Set<string>): CollisionDetection {
   return (args) => {
+    const dragType = args.active.data.current?.type
+
+    if (dragType === 'list') {
+      const filtered = {
+        ...args,
+        droppableContainers: args.droppableContainers.filter((c) =>
+          listIds.has(c.id as string),
+        ),
+      }
+      return closestCenter(filtered)
+    }
+
     const collisions = closestCenter(args)
     const cardCollision = collisions.find(
       (c) => !listIds.has(c.id as string) && c.id !== args.active.id,
@@ -43,7 +64,9 @@ interface Props {
 export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null)
   const [activeCard, setActiveCard] = useState<CardType | null>(null)
+  const [activeList, setActiveList] = useState<ListType | null>(null)
   const [dragCards, setDragCards] = useState<CardType[] | null>(null)
+  const [dragLists, setDragLists] = useState<ListType[] | null>(null)
   const dragCardsRef = useRef<CardType[] | null>(null)
   const lastMoveRef = useRef<{ overId: string; insertAfter: boolean } | null>(
     null,
@@ -51,13 +74,14 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
   const justDraggedRef = useRef(false)
 
   const effectiveCards = dragCards ?? cards
+  const effectiveLists = dragLists ?? board.lists
 
   const listIds = useMemo(
-    () => new Set(board.lists.map((l) => l.id)),
-    [board.lists],
+    () => new Set(effectiveLists.map((l) => l.id)),
+    [effectiveLists],
   )
   const collisionDetection = useMemo(
-    () => createCardFirstCollision(listIds),
+    () => createCollisionDetection(listIds),
     [listIds],
   )
 
@@ -79,6 +103,15 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
   }, [])
 
   const handleDragStart = (event: DragStartEvent) => {
+    const dragType = event.active.data.current?.type
+
+    if (dragType === 'list') {
+      const list = effectiveLists.find((l) => l.id === event.active.id) ?? null
+      setActiveList(list)
+      justDraggedRef.current = true
+      return
+    }
+
     const card = cards.find((c) => c.id === event.active.id) ?? null
     setActiveCard(card)
     const snapshot = [...cards]
@@ -89,6 +122,8 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
   }
 
   const handleDragMove = (event: DragMoveEvent) => {
+    if (event.active.data.current?.type === 'list') return
+
     const { active, over } = event
     if (!over || active.id === over.id) return
 
@@ -150,6 +185,34 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
+    const dragType = active.data.current?.type
+
+    if (dragType === 'list') {
+      setActiveList(null)
+      requestAnimationFrame(() => {
+        justDraggedRef.current = false
+      })
+
+      if (!over || active.id === over.id) return
+
+      const oldIndex = board.lists.findIndex((l) => l.id === active.id)
+      const newIndex = board.lists.findIndex((l) => l.id === over.id)
+      if (oldIndex === newIndex) return
+
+      const reordered = arrayMove(board.lists, oldIndex, newIndex)
+      setDragLists(reordered)
+
+      try {
+        await api.boards.update(board.id, { lists: reordered })
+        onBoardUpdate()
+      } catch (err) {
+        console.error('Failed to reorder lists:', err)
+      } finally {
+        setDragLists(null)
+      }
+      return
+    }
+
     setActiveCard(null)
     lastMoveRef.current = null
     requestAnimationFrame(() => {
@@ -200,9 +263,11 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
 
   const handleDragCancel = () => {
     setActiveCard(null)
+    setActiveList(null)
     dragCardsRef.current = null
     lastMoveRef.current = null
     setDragCards(null)
+    setDragLists(null)
     requestAnimationFrame(() => {
       justDraggedRef.current = false
     })
@@ -302,17 +367,22 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
       onDragCancel={handleDragCancel}
     >
       <div className={styles.board}>
-        {board.lists.map((list) => (
-          <List
-            key={list.id}
-            list={list}
-            cards={getCardsForList(list.id)}
-            onCardClick={handleCardClick}
-            onAddCard={(title) => handleAddCard(list.id, title)}
-            onRename={(newName) => handleRenameList(list.id, newName)}
-            onDelete={() => handleDeleteList(list.id)}
-          />
-        ))}
+        <SortableContext
+          items={effectiveLists.map((l) => l.id)}
+          strategy={horizontalListSortingStrategy}
+        >
+          {effectiveLists.map((list) => (
+            <List
+              key={list.id}
+              list={list}
+              cards={getCardsForList(list.id)}
+              onCardClick={handleCardClick}
+              onAddCard={(title) => handleAddCard(list.id, title)}
+              onRename={(newName) => handleRenameList(list.id, newName)}
+              onDelete={() => handleDeleteList(list.id)}
+            />
+          ))}
+        </SortableContext>
         <AddList onAdd={handleAddList} />
       </div>
 
@@ -351,6 +421,17 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
                   </div>
                 )
               })()}
+          </div>
+        ) : activeList ? (
+          <div className={styles.listOverlay}>
+            <div className={styles.listOverlayHeader}>{activeList.name}</div>
+            <div className={styles.listOverlayBody}>
+              {getCardsForList(activeList.id).map((card) => (
+                <div key={card.id} className={styles.listOverlayCard}>
+                  {card.title}
+                </div>
+              ))}
+            </div>
           </div>
         ) : null}
       </DragOverlay>
