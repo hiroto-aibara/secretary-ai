@@ -58,3 +58,14 @@
   font-size: 11px;
   color: #64748b;
 }
+
+.dragging {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.overlay {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: grabbing;
+  transform: rotate(3deg);
+}

@@ -1,4 +1,4 @@
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { SortableContext } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import type { Card as CardType, List as ListType } from '../types'
 import { Card } from './Card'
@@ -28,7 +28,7 @@ export function List({
   const [editName, setEditName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const { setNodeRef } = useDroppable({ id: list.id })
+  const { setNodeRef, isOver } = useDroppable({ id: list.id })
 
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -68,7 +68,10 @@ export function List({
   }
 
   return (
-    <div className={styles.list} ref={setNodeRef}>
+    <div
+      className={`${styles.list}${isOver ? ` ${styles.listOver}` : ''}`}
+      ref={setNodeRef}
+    >
       <div className={styles.headerRow}>
         {editing ? (
           <input
@@ -93,10 +96,7 @@ export function List({
           &times;
         </button>
       </div>
-      <SortableContext
-        items={cards.map((c) => c.id)}
-        strategy={verticalListSortingStrategy}
-      >
+      <SortableContext items={cards.map((c) => c.id)} strategy={() => null}>
         <div className={styles.cards}>
           {cards.map((card) => (
             <Card key={card.id} card={card} onClick={() => onCardClick(card)} />

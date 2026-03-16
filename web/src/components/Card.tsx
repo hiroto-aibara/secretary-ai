@@ -1,5 +1,4 @@
 import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import type { Card as CardType } from '../types'
 import styles from './Card.module.css'
 
@@ -9,19 +8,15 @@ interface Props {
 }
 
 export function Card({ card, onClick }: Props) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: card.id, data: { card } })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
+  const { attributes, listeners, setNodeRef, isDragging } = useSortable({
+    id: card.id,
+    data: { card },
+  })
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
-      className={styles.card}
+      className={`${styles.card}${isDragging ? ` ${styles.dragging}` : ''}`}
       onClick={onClick}
       {...attributes}
       {...listeners}

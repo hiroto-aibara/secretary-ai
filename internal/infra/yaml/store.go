@@ -156,7 +156,7 @@ func (s *Store) ListByBoard(_ context.Context, boardID string, includeArchived b
 		cards = append(cards, *card)
 	}
 
-	sort.Slice(cards, func(i, j int) bool {
+	sort.SliceStable(cards, func(i, j int) bool {
 		if cards[i].List != cards[j].List {
 			return cards[i].List < cards[j].List
 		}

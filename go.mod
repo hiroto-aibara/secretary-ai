@@ -1,6 +1,6 @@
 module github.com/hiroto-aibara/secretary-ai
 
-go 1.25.6
+go 1.26.1
 
 require (
 	github.com/fsnotify/fsnotify v1.9.0

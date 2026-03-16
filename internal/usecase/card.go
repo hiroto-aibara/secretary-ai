@@ -109,6 +109,7 @@ func (uc *CardUseCase) Move(ctx context.Context, boardID, cardID, toList string,
 		return nil, err
 	}
 
+	fromList := card.List
 	card.List = toList
 	card.Order = order
 	card.UpdatedAt = time.Now()
@@ -116,7 +117,70 @@ func (uc *CardUseCase) Move(ctx context.Context, boardID, cardID, toList string,
 	if err := uc.cardRepo.Save(ctx, boardID, card); err != nil {
 		return nil, err
 	}
+
+	if err := uc.reorderList(ctx, boardID, toList, cardID, order); err != nil {
+		return nil, err
+	}
+
+	if fromList != toList {
+		if err := uc.reorderList(ctx, boardID, fromList, "", -1); err != nil {
+			return nil, err
+		}
+	}
+
 	return card, nil
+}
+
+func (uc *CardUseCase) reorderList(ctx context.Context, boardID, listID, movedCardID string, targetOrder int) error {
+	allCards, err := uc.cardRepo.ListByBoard(ctx, boardID, false)
+	if err != nil {
+		return err
+	}
+
+	var listCards []domain.Card
+	for _, c := range allCards {
+		if c.List == listID {
+			listCards = append(listCards, c)
+		}
+	}
+
+	if movedCardID != "" {
+		var without []domain.Card
+		var moved *domain.Card
+		for i, c := range listCards {
+			if c.ID == movedCardID {
+				moved = &listCards[i]
+			} else {
+				without = append(without, c)
+			}
+		}
+		if moved != nil {
+			idx := targetOrder
+			if idx > len(without) {
+				idx = len(without)
+			}
+			if idx < 0 {
+				idx = 0
+			}
+			result := make([]domain.Card, 0, len(without)+1)
+			result = append(result, without[:idx]...)
+			result = append(result, *moved)
+			result = append(result, without[idx:]...)
+			listCards = result
+		}
+	}
+
+	now := time.Now()
+	for i, c := range listCards {
+		if c.Order != i {
+			c.Order = i
+			c.UpdatedAt = now
+			if err := uc.cardRepo.Save(ctx, boardID, &c); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (uc *CardUseCase) Archive(ctx context.Context, boardID, cardID string, archived bool) (*domain.Card, error) {

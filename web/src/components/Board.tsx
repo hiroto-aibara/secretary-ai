@@ -1,11 +1,15 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import {
   DndContext,
+  DragOverlay,
+  closestCenter,
+  type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
+  type DragMoveEvent,
   PointerSensor,
   useSensor,
   useSensors,
+  type CollisionDetection,
 } from '@dnd-kit/core'
 import type { Board as BoardType, Card as CardType } from '../types'
 import { List } from './List'
@@ -14,6 +18,20 @@ import { AddList } from './AddList'
 import { api } from '../hooks/useApi'
 import { generateUniqueListId } from '../utils/id'
 import styles from './Board.module.css'
+import cardStyles from './Card.module.css'
+
+function createCardFirstCollision(listIds: Set<string>): CollisionDetection {
+  return (args) => {
+    const collisions = closestCenter(args)
+    const cardCollision = collisions.find(
+      (c) => !listIds.has(c.id as string) && c.id !== args.active.id,
+    )
+    if (cardCollision) return [cardCollision]
+
+    const listCollision = collisions.find((c) => listIds.has(c.id as string))
+    return listCollision ? [listCollision] : collisions
+  }
+}
 
 interface Props {
   board: BoardType
@@ -24,7 +42,24 @@ interface Props {
 
 export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null)
-  const [dragOverList, setDragOverList] = useState<string | null>(null)
+  const [activeCard, setActiveCard] = useState<CardType | null>(null)
+  const [dragCards, setDragCards] = useState<CardType[] | null>(null)
+  const dragCardsRef = useRef<CardType[] | null>(null)
+  const lastMoveRef = useRef<{ overId: string; insertAfter: boolean } | null>(
+    null,
+  )
+  const justDraggedRef = useRef(false)
+
+  const effectiveCards = dragCards ?? cards
+
+  const listIds = useMemo(
+    () => new Set(board.lists.map((l) => l.id)),
+    [board.lists],
+  )
+  const collisionDetection = useMemo(
+    () => createCardFirstCollision(listIds),
+    [listIds],
+  )
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -32,51 +67,145 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
 
   const getCardsForList = useCallback(
     (listId: string) =>
-      (cards ?? [])
+      (effectiveCards ?? [])
         .filter((c) => c.list === listId && !c.archived)
         .sort((a, b) => a.order - b.order),
-    [cards],
+    [effectiveCards],
   )
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { over } = event
-    if (over) {
-      const overCard = (cards ?? []).find((c) => c.id === over.id)
-      setDragOverList(overCard ? overCard.list : (over.id as string))
+  const handleCardClick = useCallback((card: CardType) => {
+    if (justDraggedRef.current) return
+    setSelectedCard(card)
+  }, [])
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const card = cards.find((c) => c.id === event.active.id) ?? null
+    setActiveCard(card)
+    const snapshot = [...cards]
+    dragCardsRef.current = snapshot
+    setDragCards(snapshot)
+    lastMoveRef.current = null
+    justDraggedRef.current = true
+  }
+
+  const handleDragMove = (event: DragMoveEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const activeId = active.id as string
+    const overId = over.id as string
+
+    const activeMidY =
+      (active.rect.current.translated?.top ?? 0) +
+      (active.rect.current.translated?.height ?? 0) / 2
+
+    const isOverList = listIds.has(overId)
+    const insertAfter =
+      !isOverList && activeMidY > over.rect.top + over.rect.height / 2
+
+    const last = lastMoveRef.current
+    if (last && last.overId === overId && last.insertAfter === insertAfter) {
+      return
     }
+    lastMoveRef.current = { overId, insertAfter }
+
+    setDragCards((prev) => {
+      if (!prev) return prev
+      const activeCardItem = prev.find((c) => c.id === activeId)
+      if (!activeCardItem) return prev
+
+      const overCard = prev.find((c) => c.id === overId)
+      const targetList = overCard ? overCard.list : overId
+
+      const next = prev.filter((c) => c.id !== activeId)
+      const updatedCard = { ...activeCardItem, list: targetList }
+
+      if (overCard) {
+        const overIndex = next.findIndex((c) => c.id === overId)
+        const insertIndex = insertAfter ? overIndex + 1 : overIndex
+        next.splice(
+          insertIndex >= 0 ? insertIndex : next.length,
+          0,
+          updatedCard,
+        )
+      } else {
+        // 空リストへのドロップ
+        next.push(updatedCard)
+      }
+
+      const affectedLists = new Set([activeCardItem.list, targetList])
+      for (const listId of affectedLists) {
+        let order = 0
+        for (let i = 0; i < next.length; i++) {
+          if (next[i].list === listId && !next[i].archived) {
+            next[i] = { ...next[i], order: order++ }
+          }
+        }
+      }
+
+      dragCardsRef.current = next
+      return next
+    })
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
-    setDragOverList(null)
+    setActiveCard(null)
+    lastMoveRef.current = null
+    requestAnimationFrame(() => {
+      justDraggedRef.current = false
+    })
 
-    if (!over || active.id === over.id) return
+    if (!over) {
+      setDragCards(null)
+      return
+    }
 
-    const activeCard = (cards ?? []).find((c) => c.id === active.id)
-    if (!activeCard) return
+    const activeId = active.id as string
+    const currentDragCards = dragCardsRef.current
+    const originalCard = cards.find((c) => c.id === activeId)
+    const draggedCard = currentDragCards?.find((c) => c.id === activeId)
 
-    // Determine target list
-    const overCard = (cards ?? []).find((c) => c.id === over.id)
-    const targetList = overCard ? overCard.list : (over.id as string)
+    if (!originalCard || !draggedCard) {
+      setDragCards(null)
+      return
+    }
 
-    // Determine order
-    const targetCards = getCardsForList(targetList).filter(
-      (c) => c.id !== activeCard.id,
-    )
-    let order = 0
-    if (overCard) {
-      const overIndex = targetCards.findIndex((c) => c.id === overCard.id)
-      order = overIndex >= 0 ? overIndex : targetCards.length
-    } else {
-      order = targetCards.length
+    const targetList = draggedCard.list
+    const targetCards = (currentDragCards ?? [])
+      .filter((c) => c.list === targetList && !c.archived)
+      .sort((a, b) => a.order - b.order)
+    const order = targetCards.findIndex((c) => c.id === activeId)
+
+    if (originalCard.list === targetList && originalCard.order === order) {
+      setDragCards(null)
+      return
     }
 
     try {
-      await api.cards.move(board.id, activeCard.id, targetList, order)
+      await api.cards.move(
+        board.id,
+        activeId,
+        targetList,
+        order >= 0 ? order : 0,
+      )
       onRefresh()
     } catch (err) {
       console.error('Failed to move card:', err)
+    } finally {
+      dragCardsRef.current = null
+      setDragCards(null)
     }
+  }
+
+  const handleDragCancel = () => {
+    setActiveCard(null)
+    dragCardsRef.current = null
+    lastMoveRef.current = null
+    setDragCards(null)
+    requestAnimationFrame(() => {
+      justDraggedRef.current = false
+    })
   }
 
   const handleAddCard = async (listId: string, title: string) => {
@@ -166,16 +295,19 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
   return (
     <DndContext
       sensors={sensors}
-      onDragOver={handleDragOver}
+      collisionDetection={collisionDetection}
+      onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
-      <div className={styles.board} data-drag-over-list={dragOverList}>
+      <div className={styles.board}>
         {board.lists.map((list) => (
           <List
             key={list.id}
             list={list}
             cards={getCardsForList(list.id)}
-            onCardClick={setSelectedCard}
+            onCardClick={handleCardClick}
             onAddCard={(title) => handleAddCard(list.id, title)}
             onRename={(newName) => handleRenameList(list.id, newName)}
             onDelete={() => handleDeleteList(list.id)}
@@ -183,6 +315,45 @@ export function Board({ board, cards, onRefresh, onBoardUpdate }: Props) {
         ))}
         <AddList onAdd={handleAddList} />
       </div>
+
+      <DragOverlay dropAnimation={null}>
+        {activeCard ? (
+          <div
+            className={`${cardStyles.card} ${cardStyles.overlay} ${styles.dragOverlay}`}
+          >
+            <div className={cardStyles.title}>{activeCard.title}</div>
+            {(activeCard.labels ?? []).length > 0 && (
+              <div className={cardStyles.labels}>
+                {(activeCard.labels ?? []).map((label) => (
+                  <span key={label} className={cardStyles.label}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
+            {(activeCard.todos ?? []).length > 0 &&
+              (() => {
+                const todos = activeCard.todos ?? []
+                const completed = todos.filter((t) => t.completed).length
+                const total = todos.length
+                const percent = (completed / total) * 100
+                return (
+                  <div className={cardStyles.todoProgress}>
+                    <div className={cardStyles.progressBar}>
+                      <div
+                        className={cardStyles.progressFill}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                    <span className={cardStyles.progressText}>
+                      {completed}/{total}
+                    </span>
+                  </div>
+                )
+              })()}
+          </div>
+        ) : null}
+      </DragOverlay>
 
       {selectedCard && (
         <CardModal

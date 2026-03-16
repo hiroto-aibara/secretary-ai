@@ -66,6 +66,7 @@
   flex: 1;
   overflow-y: auto;
   min-height: 40px;
+  padding: 4px 0;
 }
 
 .addForm {
@@ -122,4 +123,10 @@
 
 .addCardTrigger:hover {
   color: #334155;
+}
+
+.listOver {
+  background: #e2e8f0;
+  outline: 2px dashed #94a3b8;
+  outline-offset: -2px;
 }
